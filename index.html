@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cam Scan PRO</title>
+<style>
+body {
+  margin: 0;
+  padding: 24px;
+  background: #101827;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+h1 { color: #35d6a0; }
+video {
+  width: 100%;
+  max-width: 500px;
+  background: #000;
+  border-radius: 14px;
+}
+button {
+  padding: 13px 17px;
+  margin: 6px;
+  border: 0;
+  border-radius: 9px;
+  background: #35d6a0;
+  color: #102018;
+  font-weight: bold;
+}
+#status { color: #ffd166; }
+</style>
+</head>
+<body>
+
+<h1>CAM SCAN PRO</h1>
+<p>Control de cámara móvil</p>
+
+<video id="video" autoplay playsinline muted></video>
+
+<p id="status">Cámara desconectada</p>
+
+<button onclick="startCamera('environment')">Cámara trasera</button>
+<button onclick="startCamera('user')">Cámara frontal</button>
+<button onclick="capturePhoto()">Tomar foto</button>
+<button onclick="stopCamera()">Detener</button>
+
+<canvas id="canvas" hidden></canvas>
+
+<script>
+let stream = null;
+
+async function startCamera(mode) {
+  try {
+    stopCamera();
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: mode } },
+      audio: false
+    });
+
+    document.getElementById("video").srcObject = stream;
+    document.getElementById("status").textContent =
+      mode === "user" ? "Cámara frontal activa" : "Cámara trasera activa";
+  } catch (error) {
+    document.getElementById("status").textContent =
+      "No se pudo abrir la cámara. Revisa los permisos.";
+  }
+}
+
+function capturePhoto() {
+  const video = document.getElementById("video");
+  if (!stream || !video.videoWidth) {
+    alert("Primero inicia la cámara");
+    return;
+  }
+
+  const canvas = document.getElementById("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+
+  const link = document.createElement("a");
+  link.download = "CamScanPRO.jpg";
+  link.href = canvas.toDataURL("image/jpeg");
+  link.click();
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+  document.getElementById("video").srcObject = null;
+  document.getElementById("status").textContent = "Cámara desconectada";
+}
+</script>
+
+</body>
+</html>
